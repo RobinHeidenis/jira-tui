@@ -1,21 +1,28 @@
 import { Box, Text, useInput } from "ink";
 import React from "react";
 import type { z } from "zod";
+import { useGetUsersQuery } from "./api/get-users.query.js";
 import type { issue as issueSchema } from "./api/issue-query.js";
+import { useUpdateIssueMutation } from "./api/update-issue.mutation.js";
 import { env } from "./env.js";
 import { priorityMap } from "./issue.js";
 import { ADFRenderer } from "./lib/adf-renderer.js";
 import type { TopLevelNode } from "./lib/nodes.js";
 import { openIssueInBrowser } from "./lib/utils/openIssueInBrowser.js";
 import { PaddedText } from "./padded-text.js";
+import { SelectUserModal } from "./select-user-modal.js";
 import { useStdoutDimensions } from "./useStdoutDimensions.js";
 
 export const ViewIssueModal = ({
   issue,
   onClose,
 }: { issue: z.infer<typeof issueSchema>; onClose: () => void }) => {
+  const { mutate } = useUpdateIssueMutation();
+  const { data: _data } = useGetUsersQuery(issue.id); // Preload users
   const [columns, rows] = useStdoutDimensions();
   const [topOffset, setTopOffset] = React.useState(0);
+  const [updateAssigneeModalOpen, setUpdateAssigneeModalOpen] =
+    React.useState(false);
 
   const description = new ADFRenderer(119, 33).render(
     issue.fields.description?.content?.length
@@ -32,22 +39,28 @@ export const ViewIssueModal = ({
   const paddedText = description.map((line) => `${line} `).join("\n");
 
   useInput((input, key) => {
-    if (input === "o") {
-      openIssueInBrowser(issue.key);
-      return;
-    }
-
-    if (lines > 35) {
-      if (input === "j") {
-        setTopOffset((prev) => Math.min(prev + 3, lines - 33));
+    if (!updateAssigneeModalOpen) {
+      if (input === "o") {
+        openIssueInBrowser(issue.key);
+        return;
       }
-      if (input === "k") {
-        setTopOffset((prev) => Math.max(prev - 3, 0));
-      }
-    }
 
-    if (input === "q" || key.escape) {
-      onClose();
+      if (input === "a") {
+        setUpdateAssigneeModalOpen(true);
+      }
+
+      if (lines > 35) {
+        if (input === "j" || key.downArrow) {
+          setTopOffset((prev) => Math.min(prev + 3, lines - 33));
+        }
+        if (input === "k" || key.upArrow) {
+          setTopOffset((prev) => Math.max(prev - 3, 0));
+        }
+      }
+
+      if (input === "q" || key.escape) {
+        onClose();
+      }
     }
   });
 
@@ -129,6 +142,21 @@ export const ViewIssueModal = ({
           borderBottom={false}
           marginTop={4 + (topOffset * 16) / (lines - 33)}
           height={17}
+        />
+      )}
+      {updateAssigneeModalOpen && (
+        <SelectUserModal
+          issueId={issue.id}
+          selectedUserId={issue.fields.assignee.accountId}
+          onClose={() => setUpdateAssigneeModalOpen(false)}
+          onSelect={(user) =>
+            mutate({
+              issueId: issue.id,
+              fields: {
+                assignee: { accountId: user.value, displayName: user.label },
+              },
+            })
+          }
         />
       )}
     </Box>

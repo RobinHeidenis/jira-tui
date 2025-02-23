@@ -21,10 +21,12 @@ export const issue = z
           })
           .nullable(),
         reporter: z.object({
+          accountId: z.string(),
           displayName: z.string(),
         }),
         assignee: z
           .object({
+            accountId: z.string(),
             displayName: z.string(),
           })
           .nullable(),
@@ -61,6 +63,7 @@ export const issue = z
         developer,
         assignee: {
           displayName: data.fields.assignee?.displayName ?? "Unassigned",
+          accountId: data.fields.assignee?.accountId ?? "",
         },
       },
     };

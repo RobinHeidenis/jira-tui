@@ -8,7 +8,7 @@ const queryClient = new QueryClient();
 export const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
-      <Box flexDirection="column">
+      <Box flexDirection="column" width={"100%"} height={"100%"}>
         <Text> JIRA TIME</Text>
         <Box
           height={"100%"}
