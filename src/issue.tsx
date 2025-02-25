@@ -1,12 +1,12 @@
 import { Box, Text } from "ink";
-import React from "react";
 
-export const priorityMap: Record<string, Parameters<typeof Text>[0]["color"]> = {
-  Blocker: "redBright",
-  High: "red",
-  Medium: "yellow",
-  Low: "blueBright",
-};
+export const priorityMap: Record<string, Parameters<typeof Text>[0]["color"]> =
+  {
+    Blocker: "redBright",
+    High: "red",
+    Medium: "yellow",
+    Low: "blueBright",
+  };
 
 export const Issue = ({
   name,

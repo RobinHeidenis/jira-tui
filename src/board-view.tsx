@@ -1,14 +1,17 @@
+import { Spinner } from "@inkjs/ui";
+import { useIsFetching } from "@tanstack/react-query";
 import { Box, Text, useInput } from "ink";
-import React, { useState } from "react";
-import { useBoardQuery } from "./api/board-query.js";
-import { useIssueQuery } from "./api/issue-query.js";
+import { useState } from "react";
+import { useBoardQuery } from "./api/get-board.query.js";
+import { useIssueQuery } from "./api/get-issues.query.js";
 import { Board } from "./board.js";
-import { SelectUsersModal } from "./select-users-modal.js";
-import { ViewIssueModal } from "./view-issue-modal.js";
+import { SelectUsersModal } from "./modals/select-users-modal.js";
+import { ViewIssueModal } from "./modals/view-issue-modal.js";
 
 export const BoardView = () => {
   const { data: board } = useBoardQuery();
   const { data: issues } = useIssueQuery(board?.filter.jql);
+  const isFetching = useIsFetching();
   const [selectUsersModalOpen, setSelectUsersModalOpen] = useState(false);
   const [selectedIssue, setSelectedIssue] = useState<string | null>(null);
   const [filteredUsers, setFilteredUsers] = useState<string[]>([]);
@@ -40,11 +43,14 @@ export const BoardView = () => {
           viewIssue={(id) => setSelectedIssue(id)}
         />
       ) : (
-        <Text>Loading...</Text>
+        <Spinner label="Getting data from Jira" />
       )}
-      <Box width={"100%"}>
-        <Text> Filter users: u | Open: o</Text>
-      </Box>
+      {board && issues && (
+        <Box width={"100%"} justifyContent="space-between">
+          <Text> Filter users: u | Open: o</Text>
+          {isFetching > 0 && <Spinner label="Fetching" />}
+        </Box>
+      )}
 
       {selectUsersModalOpen && (
         <SelectUsersModal

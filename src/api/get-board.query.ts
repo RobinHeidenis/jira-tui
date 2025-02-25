@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 import { env } from "../env.js";
+import { log } from "../lib/log.js";
 import { request } from "./request.js";
 
 const boardSchema = z.object({
@@ -33,10 +34,15 @@ const fetchBoard = async () => {
 
   const filterResponse = await request(`api/3/filter/${board.filter.id}`);
 
-  return {
-    ...board,
-    filter: filter.parse(filterResponse),
-  };
+  try {
+    return {
+      ...board,
+      filter: filter.parse(filterResponse),
+    };
+  } catch (error) {
+    log(`Failed to parse response for board: ${error}`);
+    throw error;
+  }
 };
 
 export const useBoardQuery = () => {

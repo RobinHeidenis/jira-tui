@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 import { env } from "../env.js";
+import { log } from "../lib/log.js";
 import { request } from "./request.js";
 
 // Helper type to make TypeScript happy with dynamic field access
@@ -21,17 +22,23 @@ export const issue = z
           })
           .nullable(),
         reporter: z.object({
+          accountId: z.string(),
           displayName: z.string(),
         }),
         assignee: z
           .object({
+            accountId: z.string(),
             displayName: z.string(),
           })
           .nullable(),
         priority: z.object({
+          id: z.string(),
           name: z.string(),
         }),
         status: z.object({
+          id: z.string(),
+        }),
+        project: z.object({
           id: z.string(),
         }),
       })
@@ -61,10 +68,13 @@ export const issue = z
         developer,
         assignee: {
           displayName: data.fields.assignee?.displayName ?? "Unassigned",
+          accountId: data.fields.assignee?.accountId ?? "",
         },
       },
     };
   });
+
+export type Issue = z.infer<typeof issue>;
 
 const issueSchema = z.object({
   issues: z.array(issue),
@@ -82,21 +92,27 @@ const fetchIssues = async (jql: string) => {
     "issuetype",
     "description",
     "summary",
+    "project",
     env.STORY_POINTS_FIELD,
     env.DEVELOPER_FIELD,
   ].filter(Boolean);
 
   let nextPageToken: string | undefined = undefined;
-  let allIssues: z.infer<typeof issue>[] = [];
+  let allIssues: Issue[] = [];
 
   do {
     const response = await request(
       `/api/3/search/jql?jql=${env.boards?.[Number(env.JIRA_BOARD_ID)]?.jqlPrefix} ${jql}&fields=${fields.join(",")}&maxResults=200${nextPageToken ? `&nextPageToken=${nextPageToken}` : ""}`,
     );
 
-    const parsed = issueSchema.parse(response);
-    allIssues = allIssues.concat(parsed.issues);
-    nextPageToken = parsed.nextPageToken;
+    try {
+      const parsed = issueSchema.parse(response);
+      allIssues = allIssues.concat(parsed.issues);
+      nextPageToken = parsed.nextPageToken;
+    } catch (error) {
+      log(`Failed to parse response for issues: ${error}`);
+      throw error;
+    }
   } while (nextPageToken);
   return allIssues;
 };

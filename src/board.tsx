@@ -1,16 +1,14 @@
 import { Box, Text, useInput } from "ink";
-import open from "open";
-import React, { useCallback, useState } from "react";
+import { useCallback, useState } from "react";
 import type { z } from "zod";
-import type { boardWithFilter } from "./api/board-query.js";
-import type { issue } from "./api/issue-query.js";
+import type { boardWithFilter } from "./api/get-board.query.js";
+import type { Issue } from "./api/get-issues.query.js";
 import { Column } from "./column.js";
-import { env } from "./env.js";
 import { openIssueInBrowser } from "./lib/utils/openIssueInBrowser.js";
 import { useStdoutDimensions } from "./useStdoutDimensions.js";
 
 const groupIssuesByColumn = (
-  issues: z.infer<typeof issue>[],
+  issues: Issue[],
   columnConfig: { name: string; statuses: { id: string }[] }[],
 ) => {
   const statusMap = columnConfig.reduce(
@@ -24,7 +22,7 @@ const groupIssuesByColumn = (
     {} as Record<string, string>,
   );
 
-  const columns: Record<string, z.infer<typeof issue>[]> = {};
+  const columns: Record<string, Issue[]> = {};
 
   for (const column of columnConfig) {
     columns[column.name.toLowerCase()] = [];
@@ -48,14 +46,14 @@ const groupIssuesByColumn = (
 };
 
 const getColumn = (
-  groupedIssues: Partial<Record<string, z.infer<typeof issue>[]>>,
+  groupedIssues: Partial<Record<string, Issue[]>>,
   columnName: string,
 ) => {
   return groupedIssues[columnName.toLowerCase()] ?? [];
 };
 
 const getSelectedIssue = (
-  groupedIssues: Partial<Record<string, z.infer<typeof issue>[]>>,
+  groupedIssues: Partial<Record<string, Issue[]>>,
   columns: string[],
   selectedIssue: { columnIndex: number; issueIndex: number },
 ) => {
@@ -72,7 +70,7 @@ export const Board = ({
   viewIssue,
 }: {
   boardConfiguration: z.infer<typeof boardWithFilter>;
-  issues: z.infer<typeof issue>[];
+  issues: Issue[];
   filteredUsers: string[];
   ignoreInput: boolean;
   viewIssue: (id: string | null) => void;

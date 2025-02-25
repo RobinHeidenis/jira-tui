@@ -1,7 +1,6 @@
 import { Box, Text } from "ink";
-import React from "react";
 import type { z } from "zod";
-import type { issue } from "./api/issue-query.js";
+import type { issue } from "./api/get-issues.query.js";
 import { Issue } from "./issue.js";
 
 export const Column = ({

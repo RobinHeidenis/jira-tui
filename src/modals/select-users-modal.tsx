@@ -1,6 +1,6 @@
 import { Box, Text, useInput } from "ink";
-import React, { useState } from "react";
-import { useStdoutDimensions } from "./useStdoutDimensions.js";
+import { useState } from "react";
+import { useStdoutDimensions } from "../useStdoutDimensions.js";
 
 export const SelectUsersModal = ({
   title,
